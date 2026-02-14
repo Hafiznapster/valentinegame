@@ -155,148 +155,157 @@ const ValentineGame = () => {
         const images = assetsRef.current;
 
         const render = () => {
-            const now = Date.now();
-            const state = gameRef.current;
+            try {
+                const now = Date.now();
+                const state = gameRef.current;
 
-            // Draw Background or Fallback
-            if (images.background && images.background.complete && images.background.naturalWidth !== 0) {
-                ctx.drawImage(images.background, 0, 0, canvas.width, canvas.height);
-            } else {
-                // Fallback: Clear Screen with Gradient Sky
-                const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-                gradient.addColorStop(0, '#87CEEB'); // Sky Blue
-                gradient.addColorStop(1, '#E0F7FA'); // Light Cyan
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                // Safety check for assets
+                if (!assetsRef.current) return;
 
-                // Draw Clouds
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.beginPath();
-                ctx.arc(100, 80, 30, 0, Math.PI * 2);
-                ctx.arc(140, 80, 40, 0, Math.PI * 2);
-                ctx.arc(180, 80, 30, 0, Math.PI * 2);
-                ctx.fill();
+                // Draw Background or Fallback
+                if (images.background && images.background.complete && images.background.naturalWidth !== 0) {
+                    ctx.drawImage(images.background, 0, 0, canvas.width, canvas.height);
+                } else {
+                    // Fallback: Clear Screen with Gradient Sky
+                    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                    gradient.addColorStop(0, '#87CEEB'); // Sky Blue
+                    gradient.addColorStop(1, '#E0F7FA'); // Light Cyan
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                ctx.beginPath();
-                ctx.arc(600, 120, 25, 0, Math.PI * 2);
-                ctx.arc(640, 120, 35, 0, Math.PI * 2);
-                ctx.arc(680, 120, 25, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Draw Ground with Gradient
-                const groundGradient = ctx.createLinearGradient(0, GROUND_Y + 40, 0, canvas.height);
-                groundGradient.addColorStop(0, '#4CAF50'); // Green
-                groundGradient.addColorStop(1, '#2E7D32'); // Darker Green
-                ctx.fillStyle = groundGradient;
-                ctx.fillRect(0, GROUND_Y + 40, canvas.width, canvas.height - (GROUND_Y + 40));
-
-                // Draw Grass accents
-                ctx.strokeStyle = '#388E3C';
-                ctx.lineWidth = 2;
-                for (let i = 0; i < canvas.width; i += 20) {
+                    // Draw Clouds
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
                     ctx.beginPath();
-                    ctx.moveTo(i, GROUND_Y + 40);
-                    ctx.lineTo(i + 5, GROUND_Y + 30);
-                    ctx.stroke();
-                }
-            }
+                    ctx.arc(100, 80, 30, 0, Math.PI * 2);
+                    ctx.arc(140, 80, 40, 0, Math.PI * 2);
+                    ctx.arc(180, 80, 30, 0, Math.PI * 2);
+                    ctx.fill();
 
-            // --- Game Logic ---
+                    ctx.beginPath();
+                    ctx.arc(600, 120, 25, 0, Math.PI * 2);
+                    ctx.arc(640, 120, 35, 0, Math.PI * 2);
+                    ctx.arc(680, 120, 25, 0, Math.PI * 2);
+                    ctx.fill();
 
-            // 1. Move Hafi
-            if (state.hafiX < SONU_X - 60) {
-                state.hafiX += 1.2; // Walking speed
+                    // Draw Ground with Gradient
+                    const groundGradient = ctx.createLinearGradient(0, GROUND_Y + 40, 0, canvas.height);
+                    groundGradient.addColorStop(0, '#4CAF50'); // Green
+                    groundGradient.addColorStop(1, '#2E7D32'); // Darker Green
+                    ctx.fillStyle = groundGradient;
+                    ctx.fillRect(0, GROUND_Y + 40, canvas.width, canvas.height - (GROUND_Y + 40));
 
-                // Pickup Flowers Logic
-                if (!state.hasFlowers && Math.abs(state.hafiX - FLOWER_X) < 30) {
-                    state.hasFlowers = true;
-                    state.flowersOnGround = false;
-                }
-            } else {
-                // Hafi reached Sonu
-                if (state.sonuState === 'idle') {
-                    state.sonuState = 'jumping';
-                    state.reachedSonu = true;
-                    if (!state.popupTriggered) {
-                        state.popupTriggered = true;
-                        setTimeout(() => {
-                            setUiState(prev => ({ ...prev, showPopup: true }));
-                        }, 500);
+                    // Draw Grass accents
+                    ctx.strokeStyle = '#388E3C';
+                    ctx.lineWidth = 2;
+                    for (let i = 0; i < canvas.width; i += 20) {
+                        ctx.beginPath();
+                        ctx.moveTo(i, GROUND_Y + 40);
+                        ctx.lineTo(i + 5, GROUND_Y + 30);
+                        ctx.stroke();
                     }
                 }
-            }
 
-            // --- Draw Sprites ---
+                // --- Game Logic ---
 
-            // Draw Flowers (On ground)
-            if (state.flowersOnGround && images.tulip) {
-                ctx.drawImage(images.tulip, FLOWER_X, GROUND_Y + 10, 40, 40);
-            }
+                // 1. Move Hafi
+                if (state.hafiX < SONU_X - 60) {
+                    state.hafiX += 1.2; // Walking speed
 
-            // Draw Hafi (Walking Animation)
-            let hafiFrameIndex = 0;
-            if (state.hafiX < SONU_X - 60) {
-                hafiFrameIndex = Math.floor(now / 250) % images.hafi.length;
-            } else {
-                hafiFrameIndex = 0;
-            }
-
-            const hafiY = GROUND_Y - 10;
-            const hafiImg = images.hafi[hafiFrameIndex];
-            if (hafiImg && hafiImg.complete) {
-                ctx.drawImage(hafiImg, state.hafiX, hafiY, 80, 80);
-            }
-
-            if (state.hasFlowers && images.tulip) {
-                // Draw flowers in hand
-                const handX = state.hafiX + 45;
-                const handY = hafiY + 35;
-                ctx.drawImage(images.tulip, handX, handY, 25, 25);
-            }
-
-            // Draw Sonu (Static -> Jump Animation)
-            let sonuFrameIndex = 0;
-            if (state.sonuState === 'jumping') {
-                sonuFrameIndex = Math.floor(now / 300) % images.sonu.length;
-            }
-            let sonuY = GROUND_Y - 10;
-
-            if (state.sonuState === 'jumping') {
-                sonuY = (GROUND_Y - 10) - Math.abs(Math.sin(now / 200) * 30);
-
-                // Spawn Hearts
-                if (Math.random() < 0.05) {
-                    state.particles.push({
-                        x: SONU_X + 40 + (Math.random() * 40 - 20),
-                        y: sonuY,
-                        vy: -1 - Math.random(),
-                        life: 1.0,
-                        msg: "❤️"
-                    });
+                    // Pickup Flowers Logic
+                    if (!state.hasFlowers && Math.abs(state.hafiX - FLOWER_X) < 30) {
+                        state.hasFlowers = true;
+                        state.flowersOnGround = false;
+                    }
+                } else {
+                    // Hafi reached Sonu
+                    if (state.sonuState === 'idle') {
+                        state.sonuState = 'jumping';
+                        state.reachedSonu = true;
+                        if (!state.popupTriggered) {
+                            state.popupTriggered = true;
+                            setTimeout(() => {
+                                setUiState(prev => ({ ...prev, showPopup: true }));
+                            }, 500);
+                        }
+                    }
                 }
-            }
 
-            const sonuImg = images.sonu[sonuFrameIndex];
-            if (sonuImg && sonuImg.complete) {
-                ctx.drawImage(sonuImg, SONU_X, sonuY, 80, 80);
-            }
+                // --- Draw Sprites ---
 
-            // --- Particles (Hearts) ---
-            for (let i = state.particles.length - 1; i >= 0; i--) {
-                const p = state.particles[i];
-                p.y += p.vy;
-                p.life -= 0.01;
-
-                ctx.fillStyle = `rgba(233, 30, 99, ${p.life})`;
-                ctx.font = "24px Arial";
-                ctx.fillText(p.msg, p.x, p.y);
-
-                if (p.life <= 0) {
-                    state.particles.splice(i, 1);
+                // Draw Flowers (On ground)
+                if (state.flowersOnGround && images.tulip) {
+                    ctx.drawImage(images.tulip, FLOWER_X, GROUND_Y + 10, 40, 40);
                 }
-            }
 
-            animationFrameId = requestAnimationFrame(render);
+                // Draw Hafi (Walking Animation)
+                let hafiFrameIndex = 0;
+                if (state.hafiX < SONU_X - 60) {
+                    hafiFrameIndex = Math.floor(now / 250) % images.hafi.length;
+                } else {
+                    hafiFrameIndex = 0;
+                }
+
+                const hafiY = GROUND_Y - 10;
+                const hafiImg = images.hafi[hafiFrameIndex];
+                if (hafiImg && hafiImg.complete) {
+                    ctx.drawImage(hafiImg, state.hafiX, hafiY, 80, 80);
+                }
+
+                if (state.hasFlowers && images.tulip) {
+                    // Draw flowers in hand
+                    const handX = state.hafiX + 45;
+                    const handY = hafiY + 35;
+                    ctx.drawImage(images.tulip, handX, handY, 25, 25);
+                }
+
+                // Draw Sonu (Static -> Jump Animation)
+                let sonuFrameIndex = 0;
+                if (state.sonuState === 'jumping') {
+                    sonuFrameIndex = Math.floor(now / 300) % images.sonu.length;
+                }
+                let sonuY = GROUND_Y - 10;
+
+                if (state.sonuState === 'jumping') {
+                    sonuY = (GROUND_Y - 10) - Math.abs(Math.sin(now / 200) * 30);
+
+                    // Spawn Hearts
+                    if (Math.random() < 0.05) {
+                        state.particles.push({
+                            x: SONU_X + 40 + (Math.random() * 40 - 20),
+                            y: sonuY,
+                            vy: -1 - Math.random(),
+                            life: 1.0,
+                            msg: "❤️"
+                        });
+                    }
+                }
+
+                const sonuImg = images.sonu[sonuFrameIndex];
+                if (sonuImg && sonuImg.complete) {
+                    ctx.drawImage(sonuImg, SONU_X, sonuY, 80, 80);
+                }
+
+                // --- Particles (Hearts) ---
+                for (let i = state.particles.length - 1; i >= 0; i--) {
+                    const p = state.particles[i];
+                    p.y += p.vy;
+                    p.life -= 0.01;
+
+                    ctx.fillStyle = `rgba(233, 30, 99, ${p.life})`;
+                    ctx.font = "24px Arial";
+                    ctx.fillText(p.msg, p.x, p.y);
+
+                    if (p.life <= 0) {
+                        state.particles.splice(i, 1);
+                    }
+                }
+
+                animationFrameId = requestAnimationFrame(render);
+            } catch (e) {
+                console.error("Game Loop Error:", e);
+                // Try to recover or stop loop
+                animationFrameId = requestAnimationFrame(render);
+            }
         };
 
         render();
@@ -391,7 +400,7 @@ const styles = {
     },
     canvas: {
         display: 'block',
-        backgroundColor: '#87CEEB',
+        backgroundColor: '#000', // Changed to black to detect crashes vs blue sky rendering
         width: '100%',
         height: '100%',
     },
