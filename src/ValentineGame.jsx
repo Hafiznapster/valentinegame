@@ -54,10 +54,24 @@ const ValentineGame = () => {
         letterOpen: false
     });
 
-    // Constants
-    const GROUND_Y = 365;
-    const SONU_X = 600;
-    const FLOWER_X = 300;
+    const [dimensions, setDimensions] = useState({
+        width: window.innerWidth,
+        height: window.innerHeight
+    });
+
+    // Handle Resize
+    useEffect(() => {
+        const handleResize = () => {
+            setDimensions({ width: window.innerWidth, height: window.innerHeight });
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Constants (Dynamic now)
+    // const GROUND_Y = 365;  <- Moved to render loop
+    // const SONU_X = 600;    <- Moved to render loop
+    // const FLOWER_X = 300;  <- Moved to render loop
 
     // Mobile Orientation Check
     useEffect(() => {
@@ -158,6 +172,13 @@ const ValentineGame = () => {
             try {
                 const now = Date.now();
                 const state = gameRef.current;
+
+                // Dynamic Constants based on current canvas size
+                const width = canvas.width;
+                const height = canvas.height;
+                const GROUND_Y = height * 0.81; // Keep proportionate to background
+                const SONU_X = width * 0.75;
+                const FLOWER_X = width * 0.375;
 
                 // Safety check for assets
                 if (!images || !images.hafi || !images.sonu) return;
@@ -303,9 +324,6 @@ const ValentineGame = () => {
                 animationFrameId = requestAnimationFrame(render);
             } catch (e) {
                 console.error("Game Loop Error:", e);
-                // Only set error once to avoid re-render loop spam
-            } catch (e) {
-                console.error("Game Loop Error:", e);
                 // Try to recover
                 animationFrameId = requestAnimationFrame(render);
             }
@@ -340,22 +358,7 @@ const ValentineGame = () => {
         <div style={styles.container}>
             {/* Remove wrapper size constraints, act as direct frame */}
             <div style={styles.gameWrapper}>
-                <canvas ref={canvasRef} width={800} height={450} style={styles.canvas} />
-
-                {/* On-screen Debugger */}
-                {uiState.debugError && (
-                    <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        color: 'red',
-                        background: 'rgba(0,0,0,0.8)',
-                        padding: '10px',
-                        zIndex: 999
-                    }}>
-                        Error: {uiState.debugError}
-                    </div>
-                )}
+                <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height} style={styles.canvas} />
 
                 {uiState.showPopup && (
                     <div style={styles.overlay}>
@@ -403,19 +406,13 @@ const styles = {
     },
     gameWrapper: {
         position: 'relative',
-        boxShadow: '0 0 50px rgba(0,0,0,0.5)',
-        // Exact 16:9 Contain Logic using CSS min()
-        // Width is either full width OR height * aspect_ratio (whichever is smaller)
-        width: 'min(100vw, 177.78vh)',
-        // Height is either full height OR width / aspect_ratio (whichever is smaller)
-        height: 'min(100vh, 56.25vw)',
-        aspectRatio: '16/9',
+        overflow: 'hidden',
+        width: '100vw',
+        height: '100vh',
     },
     canvas: {
         display: 'block',
         backgroundColor: '#87CEEB',
-        width: '100%',
-        height: '100%',
     },
     rotateMessage: {
         display: 'flex',
