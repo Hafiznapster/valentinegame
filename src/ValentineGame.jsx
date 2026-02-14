@@ -51,9 +51,7 @@ const ValentineGame = () => {
         isMobileLandscape: true,
         loaded: false,
         error: null,
-        letterOpen: false,
-        debugError: "",
-        debugLog: [] // Log loading steps
+        letterOpen: false
     });
 
     // Constants
@@ -82,13 +80,8 @@ const ValentineGame = () => {
         const checkLoaded = () => {
             if (!isMounted) return;
             loadedCount++;
-            setUiState(prev => ({
-                ...prev,
-                debugLog: [...prev.debugLog, `Loaded ${loadedCount}/${totalImages}`]
-            }));
-
             if (loadedCount >= totalImages) {
-                setUiState(prev => ({ ...prev, loaded: true, debugLog: [...prev.debugLog, "All Loaded!"] }));
+                setUiState(prev => ({ ...prev, loaded: true }));
             }
         };
 
@@ -136,14 +129,10 @@ const ValentineGame = () => {
         // Timeout Fallback
         const timeoutId = setTimeout(() => {
             if (isMounted && loadedCount < totalImages) {
-                console.warn(`Loading timed out. Loaded: ${loadedCount}/${totalImages}`);
-                setUiState(prev => ({
-                    ...prev,
-                    loaded: true,
-                    debugLog: [...prev.debugLog, "Timeout triggered - Force Start"]
-                }));
+                console.warn("Loading timed out, starting game anyway.");
+                setUiState(prev => ({ ...prev, loaded: true }));
             }
-        }, 1500);
+        }, 2000);
 
         return () => {
             isMounted = false;
@@ -315,11 +304,10 @@ const ValentineGame = () => {
             } catch (e) {
                 console.error("Game Loop Error:", e);
                 // Only set error once to avoid re-render loop spam
-                if (!uiState.debugError) {
-                    setUiState(prev => ({ ...prev, debugError: e.toString() }));
-                }
+            } catch (e) {
+                console.error("Game Loop Error:", e);
                 // Try to recover
-                // animationFrameId = requestAnimationFrame(render);
+                animationFrameId = requestAnimationFrame(render);
             }
         };
 
@@ -344,9 +332,6 @@ const ValentineGame = () => {
             <div style={{ ...styles.loading, flexDirection: 'column' }}>
                 <div style={{ fontSize: '40px', marginBottom: '20px' }}>❤️</div>
                 Loading Love...
-                <div style={{ fontSize: '10px', marginTop: '10px', maxWidth: '80%' }}>
-                    {uiState.debugLog.join(' | ')}
-                </div>
             </div>
         );
     }
@@ -419,21 +404,18 @@ const styles = {
     gameWrapper: {
         position: 'relative',
         boxShadow: '0 0 50px rgba(0,0,0,0.5)',
-        borderRadius: '12px',
         overflow: 'hidden',
-        border: '4px solid #333',
-        maxWidth: '100vw',
-        maxHeight: '100vh',
+        // border: '4px solid #333', // Removed for clean look
+        // maxWidth: '100vw', // Removed constraints to allow zoom
+        // maxHeight: '100vh', 
         aspectRatio: '16/9',
-        width: 'auto',
-        height: 'auto',
-        // With flex center in container, this element will scale up until it hits
-        // either the width or height of the screen, maintaining 16:9.
-        // This guarantees no part is off-screen.
+        width: '100%',
+        height: '100%',
+        transform: 'scale(1.1)', // Zoom a little bit
     },
     canvas: {
         display: 'block',
-        backgroundColor: '#222', // Dark Gray to debug
+        backgroundColor: '#87CEEB',
         width: '100%',
         height: '100%',
     },
