@@ -51,7 +51,8 @@ const ValentineGame = () => {
         isMobileLandscape: true,
         loaded: false,
         error: null,
-        letterOpen: false
+        letterOpen: false,
+        debugError: "" // New debug state
     });
 
     // Constants
@@ -160,7 +161,7 @@ const ValentineGame = () => {
                 const state = gameRef.current;
 
                 // Safety check for assets
-                if (!assetsRef.current) return;
+                if (!images || !images.hafi || !images.sonu) return;
 
                 // Draw Background or Fallback
                 if (images.background && images.background.complete && images.background.naturalWidth !== 0) {
@@ -301,9 +302,14 @@ const ValentineGame = () => {
                 }
 
                 animationFrameId = requestAnimationFrame(render);
+                animationFrameId = requestAnimationFrame(render);
             } catch (e) {
                 console.error("Game Loop Error:", e);
-                // Try to recover or stop loop
+                // Only set error once to avoid re-render loop spam
+                if (!uiState.debugError) {
+                    setUiState(prev => ({ ...prev, debugError: e.toString() }));
+                }
+                // Try to recover
                 animationFrameId = requestAnimationFrame(render);
             }
         };
@@ -338,6 +344,21 @@ const ValentineGame = () => {
             {/* Remove wrapper size constraints, act as direct frame */}
             <div style={styles.gameWrapper}>
                 <canvas ref={canvasRef} width={800} height={450} style={styles.canvas} />
+
+                {/* On-screen Debugger */}
+                {uiState.debugError && (
+                    <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        color: 'red',
+                        background: 'rgba(0,0,0,0.8)',
+                        padding: '10px',
+                        zIndex: 999
+                    }}>
+                        Error: {uiState.debugError}
+                    </div>
+                )}
 
                 {uiState.showPopup && (
                     <div style={styles.overlay}>
@@ -400,7 +421,7 @@ const styles = {
     },
     canvas: {
         display: 'block',
-        backgroundColor: '#000', // Changed to black to detect crashes vs blue sky rendering
+        backgroundColor: '#222', // Dark Gray to debug
         width: '100%',
         height: '100%',
     },
