@@ -331,7 +331,7 @@ const ValentineGame = () => {
 
         render();
         return () => cancelAnimationFrame(animationFrameId);
-    }, [uiState.loaded]);
+    }, [uiState.loaded, uiState.isMobileLandscape]);
 
     // Render HTML
     if (!uiState.isMobileLandscape) {
