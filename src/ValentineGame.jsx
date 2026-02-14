@@ -23,7 +23,7 @@ const SPRITES = {
 const ValentineGame = () => {
     const canvasRef = useRef(null);
 
-    // Game State Refs (mutable state for game loop)
+    // Game State Refs
     const gameRef = useRef({
         hafiX: 50,
         hasFlowers: false,
@@ -32,9 +32,10 @@ const ValentineGame = () => {
         reachedSonu: false,
         particles: [], // For heart effects
         startTime: Date.now(),
+        popupTriggered: false
     });
 
-    // Assets Ref (to share images between effects)
+    // Assets Ref
     const assetsRef = useRef({
         hafi: [],
         sonu: [],
@@ -122,14 +123,13 @@ const ValentineGame = () => {
             isMounted = false;
             clearTimeout(timeoutId);
         };
-    }, []); // Run once on mount
+    }, []);
 
     // 2. Game Loop Effect
     useEffect(() => {
         if (!uiState.loaded) return;
 
         const canvas = canvasRef.current;
-        // With conditional rendering, canvas should be available now
         if (!canvas) {
             console.error("Canvas ref is null despite loaded state");
             return;
@@ -150,7 +150,7 @@ const ValentineGame = () => {
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Clouds (Simple shapes)
+            // Draw Clouds
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
             ctx.beginPath();
             ctx.arc(100, 80, 30, 0, Math.PI * 2);
@@ -254,7 +254,6 @@ const ValentineGame = () => {
             }
 
             const sonuImg = images.sonu[sonuFrameIndex];
-            // Check if image exists before drawing to prevent crashes
             if (sonuImg && sonuImg.complete) {
                 ctx.drawImage(sonuImg, SONU_X, sonuY, 80, 80);
             }
@@ -279,8 +278,7 @@ const ValentineGame = () => {
 
         render();
         return () => cancelAnimationFrame(animationFrameId);
-    }, [uiState.loaded]); // Empty dependency logic handled by conditional hook execution? No.
-    // When uiState.loaded changes to true, this effect runs.
+    }, [uiState.loaded]);
 
     // Render HTML
     if (!uiState.isMobileLandscape) {
@@ -305,6 +303,7 @@ const ValentineGame = () => {
 
     return (
         <div style={styles.container}>
+            {/* Remove wrapper size constraints, act as direct frame */}
             <div style={styles.gameWrapper}>
                 <canvas ref={canvasRef} width={800} height={450} style={styles.canvas} />
 
@@ -329,23 +328,30 @@ const styles = {
         width: '100vw',
         backgroundColor: '#1a1a1a',
         overflow: 'hidden',
+        position: 'fixed',
+        top: 0,
+        left: 0
     },
     gameWrapper: {
         position: 'relative',
         boxShadow: '0 0 50px rgba(0,0,0,0.5)',
         borderRadius: '12px',
         overflow: 'hidden',
-        border: '8px solid #333',
-        maxWidth: '100%',
-        maxHeight: '100%',
+        border: '4px solid #333',
+        maxWidth: '100vw',
+        maxHeight: '100vh',
+        aspectRatio: '16/9',
+        width: 'auto',
+        height: 'auto',
+        // With flex center in container, this element will scale up until it hits
+        // either the width or height of the screen, maintaining 16:9.
+        // This guarantees no part is off-screen.
     },
     canvas: {
         display: 'block',
         backgroundColor: '#87CEEB',
-        maxWidth: '100%',
-        maxHeight: '100vh',
-        width: '100%', // Responsive
-        height: 'auto', // Aspect ratio
+        width: '100%',
+        height: '100%',
     },
     rotateMessage: {
         display: 'flex',
@@ -374,6 +380,10 @@ const styles = {
         color: '#E91E63',
         backgroundColor: '#fff',
         fontFamily: 'sans-serif',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        zIndex: 100,
     },
     popup: {
         position: 'absolute',
@@ -381,23 +391,23 @@ const styles = {
         left: '50%',
         transform: 'translate(-50%, -50%)',
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        padding: '40px',
+        padding: '20px',
         borderRadius: '20px',
         textAlign: 'center',
         color: '#E91E63',
         boxShadow: '0 10px 30px rgba(233, 30, 99, 0.3)',
         border: '4px solid #E91E63',
-        minWidth: '300px',
+        minWidth: '60%',
         zIndex: 20
     },
     popupTitle: {
         margin: '0 0 10px 0',
-        fontSize: '32px',
+        fontSize: 'clamp(20px, 5vw, 32px)',
         textShadow: '2px 2px 0px rgba(0,0,0,0.1)',
     },
     popupText: {
         margin: 0,
-        fontSize: '18px',
+        fontSize: 'clamp(14px, 3vw, 18px)',
         color: '#555',
     }
 };
