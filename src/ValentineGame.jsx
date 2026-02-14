@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import backgroundImage from './assets/background.png';
 
 // New Asset Paths
 const SPRITES = {
@@ -18,6 +19,7 @@ const SPRITES = {
         '/assets/sonu/7.png',
     ],
     tulip: '/assets/tulip.png',
+    background: backgroundImage,
 };
 
 const ValentineGame = () => {
@@ -39,7 +41,8 @@ const ValentineGame = () => {
     const assetsRef = useRef({
         hafi: [],
         sonu: [],
-        tulip: null
+        tulip: null,
+        background: null
     });
 
     // UI State
@@ -47,11 +50,12 @@ const ValentineGame = () => {
         showPopup: false,
         isMobileLandscape: true,
         loaded: false,
-        error: null
+        error: null,
+        letterOpen: false
     });
 
     // Constants
-    const GROUND_Y = 300;
+    const GROUND_Y = 365;
     const SONU_X = 600;
     const FLOWER_X = 300;
 
@@ -70,7 +74,7 @@ const ValentineGame = () => {
     // 1. Image Preloading Effect
     useEffect(() => {
         let loadedCount = 0;
-        const totalImages = SPRITES.hafi.length + SPRITES.sonu.length + 1;
+        const totalImages = SPRITES.hafi.length + SPRITES.sonu.length + 2; // +1 for Tulip, +1 for Background
         let isMounted = true;
 
         const checkLoaded = () => {
@@ -111,6 +115,17 @@ const ValentineGame = () => {
         tulipImg.src = SPRITES.tulip;
         assetsRef.current.tulip = tulipImg;
 
+        // Load Background
+        const bgImg = new Image();
+        bgImg.onload = checkLoaded;
+        bgImg.onerror = () => {
+            console.warn("Background image failed to load, using default procedural background.");
+            // Even if it fails, we count it as "loaded" (processed) so the game starts
+            checkLoaded();
+        };
+        bgImg.src = SPRITES.background;
+        assetsRef.current.background = bgImg;
+
         // Timeout Fallback
         const timeoutId = setTimeout(() => {
             if (isMounted && loadedCount < totalImages) {
@@ -143,49 +158,54 @@ const ValentineGame = () => {
             const now = Date.now();
             const state = gameRef.current;
 
-            // Clear Screen with Gradient Sky
-            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            gradient.addColorStop(0, '#87CEEB'); // Sky Blue
-            gradient.addColorStop(1, '#E0F7FA'); // Light Cyan
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Draw Background or Fallback
+            if (images.background && images.background.complete && images.background.naturalWidth !== 0) {
+                ctx.drawImage(images.background, 0, 0, canvas.width, canvas.height);
+            } else {
+                // Fallback: Clear Screen with Gradient Sky
+                const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                gradient.addColorStop(0, '#87CEEB'); // Sky Blue
+                gradient.addColorStop(1, '#E0F7FA'); // Light Cyan
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Clouds
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.beginPath();
-            ctx.arc(100, 80, 30, 0, Math.PI * 2);
-            ctx.arc(140, 80, 40, 0, Math.PI * 2);
-            ctx.arc(180, 80, 30, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(600, 120, 25, 0, Math.PI * 2);
-            ctx.arc(640, 120, 35, 0, Math.PI * 2);
-            ctx.arc(680, 120, 25, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Draw Ground with Gradient
-            const groundGradient = ctx.createLinearGradient(0, GROUND_Y + 40, 0, canvas.height);
-            groundGradient.addColorStop(0, '#4CAF50'); // Green
-            groundGradient.addColorStop(1, '#2E7D32'); // Darker Green
-            ctx.fillStyle = groundGradient;
-            ctx.fillRect(0, GROUND_Y + 40, canvas.width, canvas.height - (GROUND_Y + 40));
-
-            // Draw Grass accents
-            ctx.strokeStyle = '#388E3C';
-            ctx.lineWidth = 2;
-            for (let i = 0; i < canvas.width; i += 20) {
+                // Draw Clouds
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
                 ctx.beginPath();
-                ctx.moveTo(i, GROUND_Y + 40);
-                ctx.lineTo(i + 5, GROUND_Y + 30);
-                ctx.stroke();
+                ctx.arc(100, 80, 30, 0, Math.PI * 2);
+                ctx.arc(140, 80, 40, 0, Math.PI * 2);
+                ctx.arc(180, 80, 30, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(600, 120, 25, 0, Math.PI * 2);
+                ctx.arc(640, 120, 35, 0, Math.PI * 2);
+                ctx.arc(680, 120, 25, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw Ground with Gradient
+                const groundGradient = ctx.createLinearGradient(0, GROUND_Y + 40, 0, canvas.height);
+                groundGradient.addColorStop(0, '#4CAF50'); // Green
+                groundGradient.addColorStop(1, '#2E7D32'); // Darker Green
+                ctx.fillStyle = groundGradient;
+                ctx.fillRect(0, GROUND_Y + 40, canvas.width, canvas.height - (GROUND_Y + 40));
+
+                // Draw Grass accents
+                ctx.strokeStyle = '#388E3C';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < canvas.width; i += 20) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, GROUND_Y + 40);
+                    ctx.lineTo(i + 5, GROUND_Y + 30);
+                    ctx.stroke();
+                }
             }
 
             // --- Game Logic ---
 
             // 1. Move Hafi
             if (state.hafiX < SONU_X - 60) {
-                state.hafiX += 2.5; // Walking speed
+                state.hafiX += 1.2; // Walking speed
 
                 // Pickup Flowers Logic
                 if (!state.hasFlowers && Math.abs(state.hafiX - FLOWER_X) < 30) {
@@ -216,7 +236,7 @@ const ValentineGame = () => {
             // Draw Hafi (Walking Animation)
             let hafiFrameIndex = 0;
             if (state.hafiX < SONU_X - 60) {
-                hafiFrameIndex = Math.floor(now / 150) % images.hafi.length;
+                hafiFrameIndex = Math.floor(now / 250) % images.hafi.length;
             } else {
                 hafiFrameIndex = 0;
             }
@@ -234,12 +254,15 @@ const ValentineGame = () => {
                 ctx.drawImage(images.tulip, handX, handY, 25, 25);
             }
 
-            // Draw Sonu (Idle/Jump Animation)
-            const sonuFrameIndex = Math.floor(now / 200) % images.sonu.length;
+            // Draw Sonu (Static -> Jump Animation)
+            let sonuFrameIndex = 0;
+            if (state.sonuState === 'jumping') {
+                sonuFrameIndex = Math.floor(now / 300) % images.sonu.length;
+            }
             let sonuY = GROUND_Y - 10;
 
             if (state.sonuState === 'jumping') {
-                sonuY = (GROUND_Y - 10) - Math.abs(Math.sin(now / 150) * 30);
+                sonuY = (GROUND_Y - 10) - Math.abs(Math.sin(now / 200) * 30);
 
                 // Spawn Hearts
                 if (Math.random() < 0.05) {
@@ -308,9 +331,28 @@ const ValentineGame = () => {
                 <canvas ref={canvasRef} width={800} height={450} style={styles.canvas} />
 
                 {uiState.showPopup && (
-                    <div className="popup-overlay" style={styles.popup}>
-                        <h1 style={styles.popupTitle}>❤️ Happy Valentine's Day! ❤️</h1>
-                        <p style={styles.popupText}>You are my favorite adventure!</p>
+                    <div style={styles.overlay}>
+                        {!uiState.letterOpen ? (
+                            <div
+                                style={styles.envelope}
+                                onClick={() => setUiState(prev => ({ ...prev, letterOpen: true }))}
+                                className="bounce-animation"
+                            >
+                                <div style={{ fontSize: '80px', marginBottom: '10px' }}>💌</div>
+                                <div style={{ color: 'white', fontSize: '20px', fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                                    You have a letter! (Click to Open)
+                                </div>
+                            </div>
+                        ) : (
+                            <div style={styles.letterContainer} className="unfold-animation">
+                                <div style={styles.letterPaper}>
+                                    <p style={styles.letterText}>
+                                        "I know it's really late, and I know what we are and what we aren't. But today felt like it was meant for you, and I couldn't shake the feeling that I'd regret it if I didn't reach out. Happy Valentine's Day."
+                                    </p>
+                                    <div style={{ marginTop: '20px', fontSize: '24px' }}>❤️</div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -385,30 +427,52 @@ const styles = {
         left: 0,
         zIndex: 100,
     },
-    popup: {
+    overlay: {
         position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        padding: '20px',
-        borderRadius: '20px',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        zIndex: 20,
+        backdropFilter: 'blur(2px)' // Optional: blur background slightly
+    },
+    envelope: {
+        cursor: 'pointer',
         textAlign: 'center',
-        color: '#E91E63',
-        boxShadow: '0 10px 30px rgba(233, 30, 99, 0.3)',
-        border: '4px solid #E91E63',
-        minWidth: '60%',
-        zIndex: 20
+        animation: 'bounce 2s infinite',
+        transform: 'scale(1)',
+        transition: 'transform 0.2s',
     },
-    popupTitle: {
-        margin: '0 0 10px 0',
-        fontSize: 'clamp(20px, 5vw, 32px)',
-        textShadow: '2px 2px 0px rgba(0,0,0,0.1)',
+    letterContainer: {
+        animation: 'unfold 0.8s ease-out forwards',
+        perspective: '1000px',
     },
-    popupText: {
+    letterPaper: {
+        backgroundColor: '#fffdf0', // Creamy paper color
+        padding: '40px',
+        borderRadius: '4px',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+        maxWidth: '600px',
+        width: '90%',
+        minHeight: '300px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'relative',
+        background: `linear-gradient(to bottom, #fffdf0 0%, #fffdf0 98%, #e0e0e0 100%)`, // Slight curl effect
+    },
+    letterText: {
+        fontFamily: '"Dancing Script", "Brush Script MT", cursive', // Handwritten style font if avail, fallback to cursive
+        fontSize: '24px',
+        lineHeight: '1.6',
+        color: '#4a4a4a',
+        textAlign: 'center',
         margin: 0,
-        fontSize: 'clamp(14px, 3vw, 18px)',
-        color: '#555',
     }
 };
 
