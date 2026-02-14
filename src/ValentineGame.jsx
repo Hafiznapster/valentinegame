@@ -404,14 +404,12 @@ const styles = {
     gameWrapper: {
         position: 'relative',
         boxShadow: '0 0 50px rgba(0,0,0,0.5)',
-        overflow: 'hidden',
-        // border: '4px solid #333', // Removed for clean look
-        // maxWidth: '100vw', // Removed constraints to allow zoom
-        // maxHeight: '100vh', 
+        // Exact 16:9 Contain Logic using CSS min()
+        // Width is either full width OR height * aspect_ratio (whichever is smaller)
+        width: 'min(100vw, 177.78vh)',
+        // Height is either full height OR width / aspect_ratio (whichever is smaller)
+        height: 'min(100vh, 56.25vw)',
         aspectRatio: '16/9',
-        width: '100%',
-        height: '100%',
-        transform: 'scale(1.1)', // Zoom a little bit
     },
     canvas: {
         display: 'block',
