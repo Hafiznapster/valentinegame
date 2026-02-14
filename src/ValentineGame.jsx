@@ -52,7 +52,8 @@ const ValentineGame = () => {
         loaded: false,
         error: null,
         letterOpen: false,
-        debugError: "" // New debug state
+        debugError: "",
+        debugLog: [] // Log loading steps
     });
 
     // Constants
@@ -81,8 +82,13 @@ const ValentineGame = () => {
         const checkLoaded = () => {
             if (!isMounted) return;
             loadedCount++;
+            setUiState(prev => ({
+                ...prev,
+                debugLog: [...prev.debugLog, `Loaded ${loadedCount}/${totalImages}`]
+            }));
+
             if (loadedCount >= totalImages) {
-                setUiState(prev => ({ ...prev, loaded: true }));
+                setUiState(prev => ({ ...prev, loaded: true, debugLog: [...prev.debugLog, "All Loaded!"] }));
             }
         };
 
@@ -130,10 +136,14 @@ const ValentineGame = () => {
         // Timeout Fallback
         const timeoutId = setTimeout(() => {
             if (isMounted && loadedCount < totalImages) {
-                console.warn("Loading timed out, starting game anyway.");
-                setUiState(prev => ({ ...prev, loaded: true }));
+                console.warn(`Loading timed out. Loaded: ${loadedCount}/${totalImages}`);
+                setUiState(prev => ({
+                    ...prev,
+                    loaded: true,
+                    debugLog: [...prev.debugLog, "Timeout triggered - Force Start"]
+                }));
             }
-        }, 2000);
+        }, 1500);
 
         return () => {
             isMounted = false;
@@ -302,7 +312,6 @@ const ValentineGame = () => {
                 }
 
                 animationFrameId = requestAnimationFrame(render);
-                animationFrameId = requestAnimationFrame(render);
             } catch (e) {
                 console.error("Game Loop Error:", e);
                 // Only set error once to avoid re-render loop spam
@@ -310,7 +319,7 @@ const ValentineGame = () => {
                     setUiState(prev => ({ ...prev, debugError: e.toString() }));
                 }
                 // Try to recover
-                animationFrameId = requestAnimationFrame(render);
+                // animationFrameId = requestAnimationFrame(render);
             }
         };
 
@@ -335,6 +344,9 @@ const ValentineGame = () => {
             <div style={{ ...styles.loading, flexDirection: 'column' }}>
                 <div style={{ fontSize: '40px', marginBottom: '20px' }}>❤️</div>
                 Loading Love...
+                <div style={{ fontSize: '10px', marginTop: '10px', maxWidth: '80%' }}>
+                    {uiState.debugLog.join(' | ')}
+                </div>
             </div>
         );
     }
